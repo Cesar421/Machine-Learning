@@ -3,26 +3,16 @@ import os
 import re
 import nltk
 import pandas as pd
-nltk.download('punkt')
-nltk.download('punkt_tab')
 from collections import Counter
 from nltk.tokenize import sent_tokenize, word_tokenize
 
-# Download sources of NLTK
+# Download necessary NLTK resources
 nltk.download('punkt')
-
-import csv
-import os
-import re
-import nltk
-nltk.download('punkt')
-from collections import Counter
-from nltk.tokenize import sent_tokenize, word_tokenize
 
 # Implementing a class to extract Features from a text
 class ExtractFeatures:
 
-    def _init_(self, text):
+    def __init__(self, text):
         self.text = text
         # Tokenize sentences and words
         self.sentences = sent_tokenize(text)
@@ -63,40 +53,32 @@ class ExtractFeatures:
             self.calculateLexicalRichness()
         ]
     
-    # Implementing a function to print file to CSV
+    # Implementing a function to print features to CSV using pandas
     def printFeaturesToCSV(self, output_file="TextFeatures.csv"):
-        # Get the directory of the current script
-        script_directory = os.path.dirname(os.path.abspath(_file_))
-        
-        # Construct the full path for the output file
-        output_path = os.path.join(script_directory, output_file)
-
         # Defining the column headers for CSV
         headers = ["num_sentences", "average_word_length", "average_sentence_length", "unique_words", "lexical_richness"]
 
-        # Extract features for each text
+        # Extract features for the text
         rows = [self.collectExtractedfeatures()]
 
-        # Print features in CSV file
-        with open(output_file, "w", newline="") as csv_file:
-            writer = csv.writer(csv_file)
-            writer.writerow(headers)
-            writer.writerows(rows)
+        # Use pandas DataFrame to save the data to CSV
+        df = pd.DataFrame(rows, columns=headers)
 
-            print(f"Features extracted and saved to {output_file}")
+        # Save DataFrame to CSV with comma delimiter
+        df.to_csv(output_file, index=False, sep=',', encoding='utf-8')
+
+        print(f"Features extracted and saved to {output_file}")
 
 
 # Reading the text from the TSV file
 def read_text_from_tsv(file_path):
     with open(file_path, "r", newline="", encoding="utf-8") as tsv_file:
         reader = csv.reader(tsv_file, delimiter="\t")
-        # Assuming the text is in the first column
-        text = " ".join([row[0] for row in reader])
+        # Assuming the text is in the second column (index 1)
+        text = " ".join([row[1] for row in reader if row])  # Ensure no empty rows
     return text
 
 # Test case for usage
-text = read_text_from_tsv("dataset.tsv")
+text = read_text_from_tsv("Assignment 1\\dataset.tsv")  # Adjust the path if needed
 extractor = ExtractFeatures(text)
-extractor.printFeaturesToCSV("TestFeatures1.csv")
-
-    
+extractor.printFeaturesToCSV("Assignment 1\\TestFeatures1.csv")
