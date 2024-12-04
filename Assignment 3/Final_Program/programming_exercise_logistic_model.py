@@ -41,8 +41,7 @@ def misclassification_rate(cs: np.array, ys: np.array) -> float:
     returns the percentage of positions where truth and prediction disagree
     """  
     sizeData = cs.size
-    cs = np.transpose(cs)
-    if len(cs) == 0:
+    if sizeData == 0:
         return float('nan')
     else:
         errors = np.sum(cs != ys)  # Directly count the number of mismatches
@@ -69,7 +68,7 @@ def logistic_prediction(w: np.array, x: np.array) -> float:
     Making predictions based on the output of the logistic function
     """
     predictions = logistic_function(w, x)
-    classifications = np.array([True if value >= 0.5 else False for value in predictions])
+    classifications = predictions >= 0.5                    # Vectorized comparison
     return classifications
 
 
@@ -141,8 +140,10 @@ def train_logistic_regression_with_bgd(xs: np.array, cs: np.array, eta: float=1e
         yTrain = logistic_function(w,xTrain)
         
         # Calculation of derivatives of Weights(Gradient)
-        difference = np.transpose(cTrain - yTrain)
-        dW = (1 / numElements) * np.dot(difference,xTrain)
+        difference = (cTrain - yTrain)
+        xTrainT = np.transpose(xTrain)
+        dW = (1 / numElements) * np.dot(xTrainT,difference)
+        dW = np.transpose(dW)
         # Update Weights (Move to local minima)
         w = w + eta * dW
 
@@ -200,8 +201,10 @@ def train_logistic_regression_with_bgd_List(xs: np.array, cs: np.array, eta: flo
         yTrain = logistic_function(w,xTrain)
         
         # Calculation of derivatives of Weights(Gradient)
-        difference = np.transpose(cTrain - yTrain)
-        dW = (1 / numElements) * np.dot(difference,xTrain)
+        difference = (cTrain - yTrain)
+        xTrainT = np.transpose(xTrain)
+        dW = (1 / numElements) * np.dot(xTrainT,difference)
+        dW = np.transpose(dW)
         # Update Weights (Move to local minima)
         w = w + eta * dW
 
