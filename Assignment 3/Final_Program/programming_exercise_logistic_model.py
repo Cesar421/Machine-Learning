@@ -21,6 +21,9 @@ def load_feature_vectors(filename: str) -> np.array:
     """
     features = pd.read_csv(filename, delimiter="\t")                    # Load File
     vFeatures = features.iloc[:, 1:].values                             # Ignore 1st row of (Head of table)
+    w0_column = np.ones((vFeatures.shape[0], 1))                        # Create space for weight 0 -> Bias
+    vFeatures = np.append(w0_column, vFeatures, axis=1)
+    
     return np.array(vFeatures)
 
 
@@ -94,7 +97,7 @@ def logistic_loss(w: np.array, x: np.array, c: np.array) -> float:
     #globalLoss = (-1 / numberElements) * np.sum(lossArray)              # Obtain Global Loss
     return float(globalLoss)
 
-def train_logistic_regression_with_bgd(xs: np.array, cs: np.array, eta: float=1e-8, iterations: int=2000, validation_fraction: float=0) -> Tuple[np.array, float, float]:
+def train_logistic_regression_with_bgd(xs: np.array, cs: np.array, eta: float=1e-2, iterations: int=3500, validation_fraction: float=0) -> Tuple[np.array, float, float]:
     """
     Fit a logistic regression model using the Batch Gradient Descent algorithm and
     return the learned weights as a numpy array.
@@ -172,7 +175,7 @@ def train_logistic_regression_with_bgd(xs: np.array, cs: np.array, eta: float=1e
 
     return yfinal
 
-def train_logistic_regression_with_bgd_List(xs: np.array, cs: np.array, eta: float =1e-8, iterations: int=2000, validation_fraction: float=0) -> Tuple[np.array, np.array, np.array]:
+def train_logistic_regression_with_bgd_List(xs: np.array, cs: np.array, eta: float =1e-2, iterations: int=3500, validation_fraction: float=0) -> Tuple[np.array, np.array, np.array]:
     steps = range(iterations)
     sizeData = cs.size
     # Separate Validation and Train Sets
@@ -348,6 +351,11 @@ if __name__ == "__main__":
     yPredict = logistic_prediction(w,xs_test)
     export = pd.DataFrame(yPredict, columns=['Predicted Class'])
     export.to_csv('predictions-test.tsv', sep='\t', index=False)
+
+    countTrue = np.sum(yPredict)
+    print(f"Number of True elements: {countTrue}")
+    countFalse = yPredict.size - countTrue
+    print(f"Number of False elements: {countFalse}")
 
     #Loss and misclassification rate are related values but measure different aspects of model performance:
     # - The Loss captures how well the model predicts probabilitiesof classification.
