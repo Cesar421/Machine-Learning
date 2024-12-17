@@ -1,0 +1,6 @@
+numpy 
+pandas
+matplotlib 
+
+What you Need to write for running the code:
+python programming_exercise_neural_networks.py features-train.tsv labels-train.tsv features-test.tsv predictions-test.tsv
