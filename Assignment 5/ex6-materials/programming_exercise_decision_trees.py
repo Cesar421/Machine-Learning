@@ -377,9 +377,11 @@ if __name__ == "__main__":
     import sys
     import os
 
-    train_features_file_name = os.path.join(os.path.dirname(__file__), 'data/train-features.tsv')
-    train_classes_file_name = os.path.join(os.path.dirname(__file__), 'data/train-classes.tsv')
-    test_features_file_name = os.path.join(os.path.dirname(__file__), 'data/test-features.tsv')
+    base_path = os.path.dirname(os.path.abspath(__file__))
+    
+    train_features_file_name = os.path.join(base_path, 'data', 'features-train.tsv')
+    train_classes_file_name = os.path.join(base_path, 'data', 'labels-train.tsv')
+    test_features_file_name = os.path.join(base_path, 'data', 'features-test.tsv')
 
     test_result = pytest.main(['--tb=short', __file__])
     if test_result != 0:
