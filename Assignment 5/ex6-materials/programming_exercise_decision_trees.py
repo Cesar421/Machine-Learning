@@ -3,10 +3,11 @@ import numpy as np
 import pandas as pd
 from typing import Callable, Optional, Tuple
 import matplotlib.pyplot as plt
+from collections import Counter
 ########################################################################
 # Starter code for exercise 6: LLM detection with CART decision trees
 ########################################################################
-GROUP = # TODO: Your group number here
+GROUP = 16
 
 def load_feature_vectors(filename: str) -> np.array:
     """
@@ -29,13 +30,11 @@ def load_class_values(filename: str) -> np.array:
     return np.ravel((pd.read_csv(filename, sep='\t', usecols=["is_human"]).to_numpy() > 0) * 1)
 
 def most_common_class(cs: np.array):
-    """Return the most common class value in the given array
+    #Implementing a function to calculate the most common class in the class dataset
+    counter = Counter(cs)
+    most_common_class = counter.most_common(1)[0][0]
+    return most_common_class
 
-    Arguments:
-    - cs: a 1-dimensional array of length n, containing of the class values c(x) for
-          every element x of a dataset D
-    """
-    # TODO: Your code here
 
 def gini_impurity(cs: np.array) -> float:
     """Compute the Gini index for a set of examples represented by the list of
@@ -45,7 +44,12 @@ def gini_impurity(cs: np.array) -> float:
     - cs: a 1-dimensional array of length n, containing of the class values c(x) for
           every element x of a dataset D
     """
-    # TODO: Your code here
+    counter = Counter(cs)
+    impurity = 1
+    for label in counter:
+        label_prob = counter[label]/len(cs)
+        impurity -= label_prob**2
+    return impurity
 
 def gini_impurity_reduction(impurity_D: float, cs_l: np.array, cs_r: np.array) -> float:
     """Compute the Gini impurity reduction of a binary split.
@@ -56,7 +60,9 @@ def gini_impurity_reduction(impurity_D: float, cs_l: np.array, cs_r: np.array) -
     - cs_r: an array with the class values of the examples in the right split
     """
     size_D = len(cs_l) + len(cs_r)
-    # TODO: Your code here
+    left_impurity = gini_impurity(cs_l)
+    right_impurity = gini_impurity(cs_r)
+    return impurity_D - (len(cs_l)  / size_D * left_impurity + len(cs_r) / size_D * right_impurity)
 
 def possible_thresholds(xs: np.array, feature: int) -> np.array:
     """Compute all possible thresholds for splitting the example set xs along
@@ -67,7 +73,8 @@ def possible_thresholds(xs: np.array, feature: int) -> np.array:
     - xs: an array of shape (n, p, 1)
     - feature: an integer with 0 <= a < p, giving the feature to be used for splitting xs
     """
-    # TODO: Your code here
+    values = sorted(set(xs[:, feature, 0]))
+    return[(values[i] + values[i+1]) / 2.0 for i in range(len(values) - 1)]
 
 def find_split_indexes(xs: np.array, feature: int, threshold: float) -> Tuple[np.array, np.array]:
     """Split the given dataset using the provided feature and threshold.
@@ -110,7 +117,13 @@ def find_best_split(xs: np.array, cs: np.array) -> Tuple[int, float]:
     features = np.arange(xs.shape[1]) # features available for splitting
     for a_i in features:
         for threshold in possible_thresholds(xs, a_i):
-            # TODO: Your code here
+            left, right = find_split_indexes(xs, a_i, threshold)
+            gini_reduction = gini_impurity_reduction(gini_all, cs[left], cs[right])
+            if gini_reduction > gini_reduction_best:
+                gini_reduction_best = gini_reduction
+                a_best = a_i
+                threshold_best = threshold
+    return a_best, threshold_best
 
 def misclassification_rate(cs: np.array, ys: np.array) -> float:
     """
@@ -177,7 +190,25 @@ def id3_cart(xs: np.array, cs: np.array, max_depth: int=5) -> CARTNode:
     Returns:
     - the root node of the constructed decision tree
     """
-    # TODO: Your code here
+    if len(set(cs)) == 1 or (max_depth is not None and max_depth == 0):
+        node = CARTNode()
+        node.set_label(most_common_class(cs))
+        return node
+    
+    feature, threshold = find_best_split(xs, cs)
+    if feature is None:
+        node = CARTNode()
+        node.set_label(most_common_class(cs))
+        return node
+    
+    left_idxs, right_idxs = find_split_indexes(xs, feature, threshold)
+
+    lef_subtree = id3_cart(xs[left_idxs], cs[left_idxs], None if max_depth is None else max_depth - 1)
+    right_subtree = id3_cart(xs[right_idxs], cs[right_idxs], None if max_depth is None else max_depth - 1)
+
+    node = CARTNode()
+    node.set_split(feature, threshold, lef_subtree, right_subtree)
+    return node
 
 
 class CARTModel:
@@ -205,7 +236,14 @@ def train_and_predict(training_features_file_name: str,
     Return an array with the predicted class values, in the same order as the
     examples in the testing dataset.
     """
-    # TODO: Your code here
+    xs_train = load_feature_vectors(training_features_file_name)
+    cs_train = load_class_values(train_classes_file_name)
+    xs_test = load_feature_vectors(test_features_file_name)
+
+    model = CARTModel()
+    model.fit(xs_train, cs_train)
+    predictions = np.array([model.predict(x) for x in xs_test])
+    return predictions
 
 def plot_misclassification_rates(training_features_file_name: str,
                                 training_classes_file_name: str,
