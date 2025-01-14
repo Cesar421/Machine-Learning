@@ -15,7 +15,7 @@ def load_feature_vectors(filename: str) -> np.array:
     them as a numpy array with shape (number-of-examples, number-of-features, 1).
     """
     features = pd.read_csv(filename, sep='\t')
-    feature_names = features.columns
+    feature_names = features.columns[1:]
     xs = features.loc[:, feature_names].values
     xs = xs.reshape(xs.shape[0], xs.shape[-1], 1)
     xs = np.concatenate([np.ones([xs.shape[0], 1, 1]), xs], axis=1)
@@ -74,7 +74,7 @@ def possible_thresholds(xs: np.array, feature: int) -> np.array:
     - feature: an integer with 0 <= a < p, giving the feature to be used for splitting xs
     """
     values = sorted(set(xs[:, feature, 0]))
-    return[(values[i] + values[i+1]) / 2.0 for i in range(len(values) - 1)]
+    return[(values[i] + values[i + 1]) / 2.0 for i in range(len(values) - 1)]
 
 def find_split_indexes(xs: np.array, feature: int, threshold: float) -> Tuple[np.array, np.array]:
     """Split the given dataset using the provided feature and threshold.
@@ -194,21 +194,22 @@ def id3_cart(xs: np.array, cs: np.array, max_depth: int=5) -> CARTNode:
         node = CARTNode()
         node.set_label(most_common_class(cs))
         return node
-    
+
     feature, threshold = find_best_split(xs, cs)
     if feature is None:
         node = CARTNode()
         node.set_label(most_common_class(cs))
         return node
-    
+
     left_idxs, right_idxs = find_split_indexes(xs, feature, threshold)
 
-    lef_subtree = id3_cart(xs[left_idxs], cs[left_idxs], None if max_depth is None else max_depth - 1)
-    right_subtree = id3_cart(xs[right_idxs], cs[right_idxs], None if max_depth is None else max_depth - 1)
+    left_subtree = id3_cart(xs[left_idxs], cs[left_idxs], None if max_depth is None else max_depth-1)
+    right_subtree = id3_cart(xs[right_idxs], cs[right_idxs], None if max_depth is None else max_depth-1)
 
     node = CARTNode()
-    node.set_split(feature, threshold, lef_subtree, right_subtree)
+    node.set_split(feature, threshold, left_subtree, right_subtree)
     return node
+
 
 
 class CARTModel:
